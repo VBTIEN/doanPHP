@@ -69,6 +69,8 @@ class AuthService
         $user = Teacher::where('email', $email)->first() ?? Student::where('email', $email)->first();
         if (!$user) {
             Log::info("Email not found: {$email}");
+            Log::info("Teacher check: " . json_encode(Teacher::where('email', $email)->first()));
+            Log::info("Student check: " . json_encode(Student::where('email', $email)->first()));
             return false;
         }
 
@@ -79,12 +81,13 @@ class AuthService
         );
 
         try {
-            $resetUrl = "http://localhost:5173/reset-password?email={$email}";
+            $resetUrl = "http://localhost:5173/reset-password?email=" . ($email);
+            Log::info("Đã copy mail tới FE");
             Mail::to($email)->send(new ResetPasswordMail($resetUrl));
             Log::info("Reset link sent to: {$email}");
             return true;
         } catch (\Exception $e) {
-            Log::error("Failed to send reset link: " . $e->getMessage());
+            Log::error("Failed to send reset link to {$email}: " . $e->getMessage());
             return false;
         }
     }
