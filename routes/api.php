@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\GoogleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,10 +26,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
 });
 
-// Route::get('/status', function (Request $request) {
-//     return response()->json(['status' => 'ok', 'backend' => 'php']);
-// });
-
 Route::middleware('cors')->group(function () {
     Route::get('/status', function () {
         return response()->json(['status' => 'ok', 'backend' => 'php']);
@@ -36,3 +33,8 @@ Route::middleware('cors')->group(function () {
     Route::get('/password/validate-token', [AuthController::class, 'validateToken']);
     Route::post('/password/reset', [AuthController::class, 'resetPassword']);
 });
+
+Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
+Route::get('/select-role', [GoogleController::class, 'showRoleSelectionForm']);
+Route::post('/select-role', [GoogleController::class, 'handleRoleSelection']);

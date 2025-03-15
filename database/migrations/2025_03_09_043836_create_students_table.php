@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('password', 255);
             $table->string('name', 255);
             $table->string('role_code', 10);
+            $table->string('google_id')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
         });
     }
