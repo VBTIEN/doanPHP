@@ -19,8 +19,6 @@ use App\Http\Controllers\Auth\GoogleController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
-// Route::post('/password/reset', [AuthController::class, 'resetPassword']);
-// Route::get('/password/validate-token', [AuthController::class, 'validateToken']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);

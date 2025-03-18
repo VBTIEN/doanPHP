@@ -45,6 +45,12 @@ class GoogleController extends Controller
                 return response()->json(['error' => 'Mã xác thực không được cung cấp'], 400);
             }
 
+            // Cấu hình Guzzle để bỏ qua SSL (chỉ dùng cho dev)
+            $client = new \GuzzleHttp\Client(['verify' => false]);
+            \Log::info('Attempting to get user from Google with code: ' . $code);
+
+            Socialite::driver('google')->setHttpClient($client);
+
             $googleUser = Socialite::driver('google')->stateless()->user();
 
             \Log::info('Google User Data: ', (array) $googleUser);

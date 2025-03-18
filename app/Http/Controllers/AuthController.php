@@ -25,6 +25,7 @@ class AuthController extends Controller
             'email' => 'required|email|unique:teachers,email|unique:students,email',
             'password' => 'required|min:6|confirmed',
             'role_code' => 'required|in:R1,R2',
+            'classroom_code' => 'nullable|string|exists:classrooms,classroom_code',
         ]);
 
         if ($validator->fails()) {

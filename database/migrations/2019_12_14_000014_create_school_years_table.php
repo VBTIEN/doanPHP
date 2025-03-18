@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('students', function (Blueprint $table) {
-            $table->foreign('role_code')->references('role_code')->on('roles')->onDelete('restrict')->onUpdate('cascade');
+        Schema::create('school_years', function (Blueprint $table) {
+            $table->id();
+            $table->string('school_year_code')->unique();
+            $table->string('school_year_name');
+            $table->timestamps();
         });
     }
 
@@ -21,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('students', function (Blueprint $table) {
-            $table->dropForeign(['role_code']);
-        });
+        Schema::dropIfExists('school_years');
     }
 };

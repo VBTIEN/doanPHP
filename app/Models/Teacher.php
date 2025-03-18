@@ -19,4 +19,27 @@ class Teacher extends Model implements AuthenticatableContract
     {
         return $this->belongsTo(Role::class, 'role_code', 'role_code');
     }
+
+    public function classrooms()
+    {
+        return $this->belongsToMany(Classroom::class, 'classroom_teacher', 'teacher_code', 'classroom_code')
+                    ->withPivot('subject_code')
+                    ->withTimestamps();
+    }
+
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'teacher_subject', 'teacher_code', 'subject_code')
+                    ->withTimestamps();
+    }
+
+    public function scores()
+    {
+        return $this->hasManyThrough(Score::class, Subject::class, 'subject_code', 'subject_code');
+    }
+
+    public function homeroomClass()
+    {
+        return $this->hasOne(Classroom::class, 'homeroom_teacher_code', 'teacher_code');
+    }
 }
