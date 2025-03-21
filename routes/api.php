@@ -1,9 +1,16 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SchoolYearController;
+use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\ExamController;
+use App\Http\Controllers\GradeController;
+use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\TermController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Auth\GoogleController;
+use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +29,11 @@ Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+
+    Route::get('/teachers', [TeacherController::class, 'index']);
+    Route::get('/students-by-classroom', [TeacherController::class, 'getStudentsByClassroom']);
+    Route::post('/assign-homeroom-classroom', [TeacherController::class, 'assignHomeroomClassroom']);
+    Route::post('/assign-teaching-classroom', [TeacherController::class, 'assignTeachingClassroom']);
 });
 
 Route::middleware('cors')->group(function () {
@@ -36,3 +48,13 @@ Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 Route::get('/select-role', [GoogleController::class, 'showRoleSelectionForm']);
 Route::post('/select-role', [GoogleController::class, 'handleRoleSelection']);
+
+Route::get('/roles', [RoleController::class, 'index']);
+Route::get('/school-years', [SchoolYearController::class, 'index']);
+Route::get('/classrooms', [ClassroomController::class, 'index']);
+Route::get('/exams', [ExamController::class, 'index']);
+Route::get('/grades', [GradeController::class, 'index']);
+Route::get('/subjects', [SubjectController::class, 'index']);
+Route::get('/terms', [TermController::class, 'index']);
+
+Route::get('/teachers-in-classroom', [TeacherController::class, 'getTeachersInClassroom']);

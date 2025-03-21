@@ -15,7 +15,7 @@ class SchoolYearSeeder extends Seeder
     {
         $schoolYears = [];
 
-        for ($year = 2024; $year <= 2025; $year++) {
+        for ($year = 2024; $year <= 2024; $year++) {
             $nextYear = $year + 1;
             $schoolYears[] = [
                 'school_year_code' => "SY_{$year}-{$nextYear}",

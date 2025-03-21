@@ -34,9 +34,19 @@ class AuthService
             $number = $latest ? (int) substr($latest->teacher_code, 1) + 1 : 1;
             return 'T' . $number;
         } elseif ($roleCode === 'R2') {
-            $latest = Student::orderBy('student_code', 'desc')->first();
-            $number = $latest ? (int) substr($latest->teacher_code, 1) + 1 : 1;
-            return 'S' . $number;
+            // Lấy tất cả student_code hiện có để tìm mã lớn nhất
+            $students = Student::pluck('student_code')->toArray();
+            $maxNumber = 0;
+
+            foreach ($students as $code) {
+                $number = (int) substr($code, 1); // Lấy phần số từ student_code (S1 -> 1)
+                if ($number > $maxNumber) {
+                    $maxNumber = $number;
+                }
+            }
+
+            $nextNumber = $maxNumber + 1;
+            return 'S' . $nextNumber;
         }
 
         throw new \Exception('Invalid role_code');
@@ -44,28 +54,91 @@ class AuthService
 
     public function createUser($roleCode, array $data)
     {
-        $code = $this->generateCode($roleCode);
+        $code = isset($data['student_code']) ? $data['student_code'] : $this->generateCode($roleCode);
+
         $userData = [
-            'teacher_code' => $code,
-            'student_code' => $code,
             'email' => $data['email'],
-            'password' => bcrypt($data['password']), // Mã hóa mật khẩu
+            'password' => bcrypt($data['password']),
             'name' => $data['name'],
             'role_code' => $roleCode,
         ];
+
+        if ($roleCode === 'R1') {
+            $userData['teacher_code'] = $code;
+        } elseif ($roleCode === 'R2') {
+            $userData['student_code'] = $code;
+            $classroom = $this->assignClassroomForStudent($data['grade_code']);
+            $userData['classroom_code'] = $classroom->classroom_code;
+        }
 
         $user = $roleCode === 'R1'
             ? Teacher::create($userData)
             : Student::create($userData);
 
-        if ($roleCode === 'R1' && isset($data['classroom_code'])) {
-            $this->assignHomeroomTeacher($user, $data['classroom_code']);
+        if ($roleCode === 'R1') {
+            // Gán các môn học cho giáo viên (bảng teacher_subject)
+            if (isset($data['subject_codes']) && is_array($data['subject_codes'])) {
+                $teacherSubjects = [];
+                foreach ($data['subject_codes'] as $subjectCode) {
+                    $teacherSubjects[] = [
+                        'teacher_code' => $code,
+                        'subject_code' => $subjectCode,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                DB::table('teacher_subject')->insert($teacherSubjects);
+            }
+
+            // Nếu có classroom_code, gán giáo viên làm chủ nhiệm và tự động gán các môn vào classroom_teacher
+            if (isset($data['classroom_code'])) {
+                $this->assignHomeroomTeacher($user, $data['classroom_code']);
+
+                // Tự động gán các môn mà giáo viên đăng ký vào bảng classroom_teacher
+                if (isset($data['subject_codes']) && is_array($data['subject_codes'])) {
+                    $classroomTeacherData = [];
+                    foreach ($data['subject_codes'] as $subjectCode) {
+                        $classroomTeacherData[] = [
+                            'classroom_code' => $data['classroom_code'],
+                            'teacher_code' => $code,
+                            'subject_code' => $subjectCode,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
+                    DB::table('classroom_teacher')->insert($classroomTeacherData);
+                }
+            }
         }
 
         return $user;
     }
 
-    private function assignHomeroomTeacher($teacher, $classroomCode)
+    /**
+     * Tự động xếp học sinh vào lớp dựa trên grade_code.
+     * Lớp được chọn theo thứ tự tăng dần của classroom_code, với giới hạn 10 học sinh mỗi lớp.
+     */
+    private function assignClassroomForStudent($gradeCode)
+    {
+        // Tìm lớp thuộc khối grade_code, có dưới 10 học sinh, sắp xếp tăng dần theo classroom_code
+        $classroom = Classroom::where('grade_code', $gradeCode)
+            ->where('student_count', '<', 10)
+            ->orderBy('classroom_code', 'asc')
+            ->first();
+
+        if (!$classroom) {
+            // Nếu không có lớp nào trống, tạo lớp mới (tuỳ thuộc yêu cầu)
+            throw new \Exception('No available classroom in this grade');
+        }
+
+        // Tăng student_count
+        $classroom->student_count += 1;
+        $classroom->save();
+
+        return $classroom;
+    }
+
+    public function assignHomeroomTeacher($teacher, $classroomCode)
     {
         $classroom = Classroom::where('classroom_code', $classroomCode)->first();
 

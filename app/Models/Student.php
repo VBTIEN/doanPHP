@@ -29,9 +29,4 @@ class Student extends Model implements AuthenticatableContract
     {
         return $this->hasMany(Score::class, 'student_code', 'student_code');
     }
-
-    public function grades()
-    {
-        return $this->hasMany(Grade::class, 'student_code', 'student_code');
-    }
 }
