@@ -70,7 +70,7 @@ class TeacherSeeder extends Seeder
                 $teacher = Teacher::create([
                     'teacher_code' => $teacherCode,
                     'email' => "teacher{$teacherCounter}@example.com",
-                    'password' => Hash::make('password'), // Mật khẩu mặc định
+                    'password' => Hash::make('password123'), // Mật khẩu mặc định
                     'name' => "Teacher {$teacherCounter}",
                     'role_code' => 'R1', // Sử dụng role_code R1 (Teacher)
                     'google_id' => null,
@@ -156,7 +156,7 @@ class TeacherSeeder extends Seeder
                     $teacher = Teacher::create([
                         'teacher_code' => $teacherCode,
                         'email' => "teacher{$teacherCounter}@example.com",
-                        'password' => Hash::make('password'), // Mật khẩu mặc định
+                        'password' => Hash::make('password123'), // Mật khẩu mặc định
                         'name' => "Teacher {$teacherCounter}",
                         'role_code' => 'R1', // Sử dụng role_code R1 (Teacher)
                         'google_id' => null,

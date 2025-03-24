@@ -9,8 +9,10 @@ use App\Http\Controllers\TermController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\RankingController;
+use App\Http\Controllers\AcademicPerformanceController;
 use Illuminate\Support\Facades\Route;
-
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/students-by-classroom', [TeacherController::class, 'getStudentsByClassroom']);
     Route::post('/assign-homeroom-classroom', [TeacherController::class, 'assignHomeroomClassroom']);
     Route::post('/assign-teaching-classroom', [TeacherController::class, 'assignTeachingClassroom']);
+    Route::post('/teacher/enter-scores', [TeacherController::class, 'enterScores']);
+
+    Route::post('/student/scores', [StudentController::class, 'getScores']);
 });
 
 Route::middleware('cors')->group(function () {
@@ -58,3 +63,23 @@ Route::get('/subjects', [SubjectController::class, 'index']);
 Route::get('/terms', [TermController::class, 'index']);
 
 Route::get('/teachers-in-classroom', [TeacherController::class, 'getTeachersInClassroom']);
+
+Route::prefix('rankings')->group(function () {
+    // Routes cho xếp hạng cả năm
+    Route::post('/classroom-yearly', [RankingController::class, 'getClassroomYearlyRankings']);
+    Route::post('/grade-yearly', [RankingController::class, 'getGradeYearlyRankings']);
+
+    // Routes cho xếp hạng học kỳ
+    Route::post('/classroom-term', [RankingController::class, 'getClassroomTermRankings']);
+    Route::post('/grade-term', [RankingController::class, 'getGradeTermRankings']);
+});
+
+Route::prefix('academic-performance')->group(function () {
+    // Routes cho học lực trong lớp
+    Route::post('/classroom-term', [AcademicPerformanceController::class, 'getClassroomTermPerformance']);
+    Route::post('/classroom-yearly', [AcademicPerformanceController::class, 'getClassroomYearlyPerformance']);
+
+    // Routes cho học lực trong khối
+    Route::post('/grade-term', [AcademicPerformanceController::class, 'getGradeTermPerformance']);
+    Route::post('/grade-yearly', [AcademicPerformanceController::class, 'getGradeYearlyPerformance']);
+});

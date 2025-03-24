@@ -203,6 +203,67 @@ class TeacherController extends Controller
         }
     }
 
+    /**
+     * Nhập điểm cho học sinh trong một lớp cho một bài kiểm tra.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function enterScores(Request $request)
+    {
+        $user = $request->user();
+        if (!$user || $user->role_code !== 'R1') {
+            return ResponseFormatter::fail(
+                'Không có quyền thực hiện. Chỉ giáo viên mới được phép.',
+                null,
+                403
+            );
+        }
+
+        $classroomCode = $request->input('classroom_code');
+        $examCode = $request->input('exam_code');
+        $scores = $request->input('scores');
+
+        if (!$classroomCode) {
+            return ResponseFormatter::fail(
+                'classroom_code là bắt buộc',
+                null,
+                422
+            );
+        }
+
+        if (!$examCode) {
+            return ResponseFormatter::fail(
+                'exam_code là bắt buộc',
+                null,
+                422
+            );
+        }
+
+        if (!$scores || !is_array($scores) || empty($scores)) {
+            return ResponseFormatter::fail(
+                'Danh sách điểm (scores) là bắt buộc và không được rỗng',
+                null,
+                422
+            );
+        }
+
+        try {
+            $enteredScores = $this->teacherService->enterScores($user, $classroomCode, $examCode, $scores);
+
+            return ResponseFormatter::success(
+                $enteredScores,
+                'Nhập điểm thành công'
+            );
+        } catch (\Exception $e) {
+            return ResponseFormatter::fail(
+                $e->getMessage(),
+                null,
+                400
+            );
+        }
+    }
+
     private function removeSensitiveData(array $data)
     {
         unset($data['password']);

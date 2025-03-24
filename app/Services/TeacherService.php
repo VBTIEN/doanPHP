@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Models\Teacher;
 use App\Models\Classroom;
 use App\Models\Subject;
+use App\Models\Exam;
+use App\Models\Student;
+use App\Models\Score;
 use Illuminate\Support\Facades\DB;
 
 class TeacherService
@@ -275,6 +278,125 @@ class TeacherService
 
             $result[] = $teacherData;
         }
+
+        return $result;
+    }
+
+    /**
+     * Nhập điểm mới hoặc sửa điểm cho học sinh trong một lớp cho một bài kiểm tra cụ thể.
+     *
+     * @param Teacher $teacher Giáo viên đang xác thực
+     * @param string $classroomCode Mã lớp học
+     * @param string $examCode Mã bài kiểm tra
+     * @param array $scores Danh sách điểm của học sinh
+     * @return array Danh sách các điểm đã nhập hoặc sửa
+     * @throws \Exception
+     */
+    public function enterScores(Teacher $teacher, string $classroomCode, string $examCode, array $scores): array
+    {
+        // Kiểm tra lớp học có tồn tại không
+        $classroom = Classroom::where('classroom_code', $classroomCode)->first();
+        if (!$classroom) {
+            throw new \Exception('Không tìm thấy lớp học');
+        }
+
+        // Kiểm tra bài kiểm tra có tồn tại không
+        $exam = Exam::where('exam_code', $examCode)->first();
+        if (!$exam) {
+            throw new \Exception('Không tìm thấy bài kiểm tra');
+        }
+
+        // Kiểm tra xem giáo viên có quyền nhập điểm cho môn học này trong lớp này không
+        $subjectCode = $exam->subject_code;
+        $isAssigned = DB::table('classroom_teacher')
+            ->where('classroom_code', $classroomCode)
+            ->where('teacher_code', $teacher->teacher_code)
+            ->where('subject_code', $subjectCode)
+            ->exists();
+
+        if (!$isAssigned) {
+            throw new \Exception('Bạn không có quyền nhập điểm cho môn học này trong lớp này');
+        }
+
+        // Lấy danh sách học sinh trong lớp
+        $students = Student::where('classroom_code', $classroomCode)->pluck('student_code')->toArray();
+        if (empty($students)) {
+            throw new \Exception('Lớp không có học sinh nào');
+        }
+
+        // Kiểm tra danh sách điểm gửi lên
+        $studentCodesInRequest = array_column($scores, 'student_code');
+        $scoreData = [];
+        foreach ($scores as $score) {
+            $studentCode = $score['student_code'] ?? null;
+            $scoreValue = $score['score_value'] ?? null;
+
+            if (!$studentCode || !in_array($studentCode, $students)) {
+                throw new \Exception("Học sinh {$studentCode} không thuộc lớp này");
+            }
+
+            if (!is_numeric($scoreValue) || $scoreValue < 0 || $scoreValue > 10) {
+                throw new \Exception("Điểm của học sinh {$studentCode} không hợp lệ. Điểm phải từ 0 đến 10.");
+            }
+
+            $scoreData[$studentCode] = [
+                'student_code' => $studentCode,
+                'exam_code' => $examCode,
+                'score_value' => $scoreValue,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        // Lấy tất cả điểm hiện có của bài kiểm tra này cho học sinh trong lớp
+        $existingScores = Score::where('exam_code', $examCode)
+            ->whereIn('student_code', $students)
+            ->get()
+            ->keyBy('student_code')
+            ->toArray();
+
+        // Xử lý nhập điểm mới hoặc sửa điểm trong transaction
+        $result = [];
+        DB::transaction(function () use ($examCode, $students, $studentCodesInRequest, $scoreData, $existingScores, &$result) {
+            // Cập nhật hoặc thêm mới điểm cho các học sinh được gửi trong request
+            foreach ($scoreData as $studentCode => $score) {
+                $existingScore = $existingScores[$studentCode] ?? null;
+
+                if ($existingScore) {
+                    // Nếu điểm đã tồn tại, cập nhật điểm
+                    Score::where('exam_code', $examCode)
+                        ->where('student_code', $studentCode)
+                        ->update([
+                            'score_value' => $score['score_value'],
+                            'updated_at' => now(),
+                        ]);
+                } else {
+                    // Nếu điểm chưa tồn tại, thêm mới
+                    Score::create([
+                        'student_code' => $studentCode,
+                        'exam_code' => $examCode,
+                        'score_value' => $score['score_value'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            // Lấy lại tất cả điểm (bao gồm cả điểm không được sửa) để trả về
+            $updatedScores = Score::where('exam_code', $examCode)
+                ->whereIn('student_code', $students)
+                ->get()
+                ->map(function ($score) {
+                    return [
+                        'student_code' => $score->student_code,
+                        'exam_code' => $score->exam_code,
+                        'score_value' => $score->score_value,
+                    ];
+                })
+                ->toArray();
+
+            $result = $updatedScores;
+        });
 
         return $result;
     }
