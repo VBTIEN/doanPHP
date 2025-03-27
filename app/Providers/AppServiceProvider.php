@@ -22,5 +22,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Score::observe(ScoreObserver::class);
+
+        $this->app->bind(\App\Http\Middleware\CustomSanctumAuth::class, function ($app) {
+            return new \App\Http\Middleware\CustomSanctumAuth(
+                new Guard($app['auth'], config('sanctum.expiration'), 'users')
+            );
+        });
     }
 }

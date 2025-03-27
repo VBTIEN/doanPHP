@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('google_id')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('classroom_code')->nullable();
+            $table->string('avatarUrl')->nullable()->default(null);
             $table->timestamps();
         });
     }

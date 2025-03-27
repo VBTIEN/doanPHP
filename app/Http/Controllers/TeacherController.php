@@ -9,6 +9,7 @@ use App\Models\Classroom;
 use App\Models\Student;
 use App\Services\AuthService;
 use App\Services\TeacherService;
+use Illuminate\Support\Facades\Log;
 
 class TeacherController extends Controller
 {
@@ -128,12 +129,6 @@ class TeacherController extends Controller
         }
     }
 
-    /**
-     * Giáo viên nhận dạy lớp, hệ thống tự tính toán các môn có thể dạy.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function assignTeachingClassroom(Request $request)
     {
         $user = $request->user();
@@ -170,12 +165,6 @@ class TeacherController extends Controller
         }
     }
 
-    /**
-     * Lấy danh sách giáo viên dạy trong một lớp dựa trên classroom_code.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function getTeachersInClassroom(Request $request)
     {
         $classroomCode = $request->query('classroom_code');
@@ -203,12 +192,6 @@ class TeacherController extends Controller
         }
     }
 
-    /**
-     * Nhập điểm cho học sinh trong một lớp cho một bài kiểm tra.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function enterScores(Request $request)
     {
         $user = $request->user();
@@ -256,6 +239,41 @@ class TeacherController extends Controller
                 'Nhập điểm thành công'
             );
         } catch (\Exception $e) {
+            return ResponseFormatter::fail(
+                $e->getMessage(),
+                null,
+                400
+            );
+        }
+    }
+
+    /**
+     * Cập nhật thông tin của giáo viên đã xác thực.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request)
+    {
+        $user = $request->user();
+        if (!$user || $user->role_code !== 'R1') {
+            return ResponseFormatter::fail(
+                'Không có quyền truy cập. Chỉ giáo viên mới được phép.',
+                null,
+                403
+            );
+        }
+
+        try {
+            // Gọi service để xử lý logic cập nhật
+            $updatedTeacher = $this->teacherService->updateTeacher($request, $user);
+
+            return ResponseFormatter::success(
+                $this->removeSensitiveData($updatedTeacher->toArray()),
+                'Cập nhật thông tin giáo viên thành công'
+            );
+        } catch (\Exception $e) {
+            Log::error("Error in update teacher: " . $e->getMessage());
             return ResponseFormatter::fail(
                 $e->getMessage(),
                 null,

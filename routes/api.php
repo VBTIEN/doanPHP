@@ -12,6 +12,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\RankingController;
 use App\Http\Controllers\AcademicPerformanceController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\ImportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,8 +39,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/assign-homeroom-classroom', [TeacherController::class, 'assignHomeroomClassroom']);
     Route::post('/assign-teaching-classroom', [TeacherController::class, 'assignTeachingClassroom']);
     Route::post('/teacher/enter-scores', [TeacherController::class, 'enterScores']);
+    Route::put('/teacher/update', [TeacherController::class, 'update']);
 
     Route::post('/student/scores', [StudentController::class, 'getScores']);
+    Route::put('/student/update', [StudentController::class, 'update']);
 });
 
 Route::middleware('cors')->group(function () {
@@ -83,3 +87,9 @@ Route::prefix('academic-performance')->group(function () {
     Route::post('/grade-term', [AcademicPerformanceController::class, 'getGradeTermPerformance']);
     Route::post('/grade-yearly', [AcademicPerformanceController::class, 'getGradeYearlyPerformance']);
 });
+
+Route::get('/export-scores', [ExportController::class, 'exportScores']);
+Route::get('/export-student-term-averages', [ExportController::class, 'exportStudentTermAverages']);
+Route::get('/export-student-yearly-averages', [ExportController::class, 'exportStudentYearlyAverages']);
+
+Route::post('/import-scores', [ImportController::class, 'importScores']);

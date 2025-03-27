@@ -11,9 +11,12 @@ class Student extends Model implements AuthenticatableContract
 {
     use Authenticatable, HasApiTokens;
 
-    protected $fillable = ['student_code', 'email', 'password', 'name', 'role_code', 'google_id', 'email_verified_at', 'classroom_code'];
+    protected $fillable = ['student_code', 'email', 'password', 'name', 'role_code', 'google_id', 'email_verified_at', 'classroom_code', 'avatarUrl',];
     protected $hidden = ['password'];
     protected $casts = ['email_verified_at' => 'datetime'];
+    protected $attributes = [
+        'avatarUrl' => null, // Giá trị mặc định là null
+    ];
 
     public function role()
     {
