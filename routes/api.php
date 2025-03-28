@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/assign-teaching-classroom', [TeacherController::class, 'assignTeachingClassroom']);
     Route::post('/teacher/enter-scores', [TeacherController::class, 'enterScores']);
     Route::put('/teacher/update', [TeacherController::class, 'update']);
+    Route::post('/teacher/classroom-scores', [TeacherController::class, 'getClassroomScores']);
 
     Route::post('/student/scores', [StudentController::class, 'getScores']);
     Route::put('/student/update', [StudentController::class, 'update']);

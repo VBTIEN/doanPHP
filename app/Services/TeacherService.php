@@ -406,6 +406,86 @@ class TeacherService
     }
 
     /**
+     * Lấy danh sách điểm của một lớp mà giáo viên dạy.
+     *
+     * @param Teacher $teacher Giáo viên đang xác thực
+     * @param string $classroomCode Mã lớp học
+     * @param string|null $examCode Mã bài kiểm tra (tùy chọn)
+     * @param string|null $subjectCode Mã môn học (tùy chọn)
+     * @return array Danh sách điểm của học sinh
+     * @throws \Exception
+     */
+    public function getClassroomScores(Teacher $teacher, string $classroomCode, ?string $examCode = null, ?string $subjectCode = null): array
+    {
+        // Kiểm tra lớp học có tồn tại không
+        $classroom = Classroom::where('classroom_code', $classroomCode)->first();
+        if (!$classroom) {
+            throw new \Exception('Không tìm thấy lớp học');
+        }
+
+        // Kiểm tra xem giáo viên có dạy lớp này không
+        $teacherSubjects = DB::table('classroom_teacher')
+            ->where('classroom_code', $classroomCode)
+            ->where('teacher_code', $teacher->teacher_code)
+            ->pluck('subject_code')
+            ->toArray();
+
+        if (empty($teacherSubjects)) {
+            throw new \Exception('Bạn không dạy lớp này');
+        }
+
+        // Nếu có subject_code, kiểm tra xem giáo viên có dạy môn đó trong lớp này không
+        if ($subjectCode) {
+            if (!in_array($subjectCode, $teacherSubjects)) {
+                throw new \Exception('Bạn không dạy môn này trong lớp này');
+            }
+            $subjectsToQuery = [$subjectCode];
+        } else {
+            $subjectsToQuery = $teacherSubjects; // Lấy tất cả môn mà giáo viên dạy
+        }
+
+        // Kiểm tra exam_code nếu có
+        if ($examCode) {
+            $exam = Exam::where('exam_code', $examCode)->first();
+            if (!$exam) {
+                throw new \Exception('Không tìm thấy bài kiểm tra');
+            }
+            // Kiểm tra xem bài kiểm tra có thuộc môn mà giáo viên dạy không
+            if (!in_array($exam->subject_code, $subjectsToQuery)) {
+                throw new \Exception('Bài kiểm tra không thuộc môn bạn dạy trong lớp này');
+            }
+        }
+
+        // Lấy danh sách học sinh trong lớp
+        $students = Student::where('classroom_code', $classroomCode)
+            ->pluck('student_code')
+            ->toArray();
+        if (empty($students)) {
+            throw new \Exception('Lớp không có học sinh nào');
+        }
+
+        // Lấy danh sách điểm
+        $query = Score::whereIn('student_code', $students)
+            ->join('exams', 'scores.exam_code', '=', 'exams.exam_code')
+            ->whereIn('exams.subject_code', $subjectsToQuery)
+            ->select('scores.student_code', 'scores.exam_code', 'scores.score_value');
+
+        if ($examCode) {
+            $query->where('scores.exam_code', $examCode);
+        }
+
+        $scores = $query->get()->map(function ($score) {
+            return [
+                'student_code' => $score->student_code,
+                'exam_code' => $score->exam_code,
+                'score_value' => $score->score_value,
+            ];
+        })->toArray();
+
+        return $scores;
+    }
+
+    /**
      * Cập nhật thông tin giáo viên.
      *
      * @param Request $request

@@ -248,6 +248,51 @@ class TeacherController extends Controller
     }
 
     /**
+     * Lấy danh sách điểm của một lớp mà giáo viên dạy.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getClassroomScores(Request $request)
+    {
+        $user = $request->user();
+        if (!$user || $user->role_code !== 'R1') {
+            return ResponseFormatter::fail(
+                'Không có quyền truy cập. Chỉ giáo viên mới được phép.',
+                null,
+                403
+            );
+        }
+
+        $classroomCode = $request->input('classroom_code');
+        $examCode = $request->input('exam_code');
+        $subjectCode = $request->input('subject_code');
+
+        if (!$classroomCode) {
+            return ResponseFormatter::fail(
+                'classroom_code là bắt buộc',
+                null,
+                422
+            );
+        }
+
+        try {
+            $scores = $this->teacherService->getClassroomScores($user, $classroomCode, $examCode, $subjectCode);
+
+            return ResponseFormatter::success(
+                $scores,
+                'Lấy danh sách điểm của lớp thành công'
+            );
+        } catch (\Exception $e) {
+            return ResponseFormatter::fail(
+                $e->getMessage(),
+                null,
+                400
+            );
+        }
+    }
+
+    /**
      * Cập nhật thông tin của giáo viên đã xác thực.
      *
      * @param Request $request
