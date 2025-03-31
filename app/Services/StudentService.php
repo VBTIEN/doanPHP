@@ -22,11 +22,12 @@ class StudentService
      */
     public function getStudentScores(string $studentCode, ?string $subjectCode = null, ?string $termCode = null): array
     {
-        // Truy vấn bảng scores và join với exams để lấy term_code và subject_code
+        // Truy vấn bảng scores và join với exams để lấy term_code, subject_code và date
         $query = Score::select(
             'scores.exam_code',
             'exams.term_code',
             'exams.subject_code',
+            'exams.date', // Thêm trường date từ bảng exams
             'scores.score_value'
         )
             ->join('exams', 'scores.exam_code', '=', 'exams.exam_code')
@@ -48,6 +49,7 @@ class StudentService
                 'exam_code' => $score->exam_code,
                 'term_code' => $score->term_code,
                 'subject_code' => $score->subject_code,
+                'date' => $score->date, // Thêm trường date vào kết quả
                 'score_value' => $score->score_value,
             ];
         })->toArray();

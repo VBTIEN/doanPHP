@@ -14,6 +14,7 @@ use App\Http\Controllers\RankingController;
 use App\Http\Controllers\AcademicPerformanceController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\AIController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/student/scores', [StudentController::class, 'getScores']);
     Route::put('/student/update', [StudentController::class, 'update']);
+    Route::post('/export/student-scores', [ExportController::class, 'exportStudentScores']);
 });
 
 Route::middleware('cors')->group(function () {
@@ -94,3 +96,5 @@ Route::get('/export-student-term-averages', [ExportController::class, 'exportStu
 Route::get('/export-student-yearly-averages', [ExportController::class, 'exportStudentYearlyAverages']);
 
 Route::post('/import-scores', [ImportController::class, 'importScores']);
+
+Route::post('/ai/ask', [AIController::class, 'ask']);
