@@ -90,8 +90,8 @@ class AuthService
                 DB::table('teacher_subject')->insert($teacherSubjects);
             }
 
-            // Nếu có classroom_code, gán giáo viên làm chủ nhiệm và tự động gán các môn vào classroom_teacher
-            if (isset($data['classroom_code'])) {
+            // Chỉ gán giáo viên làm chủ nhiệm nếu classroom_code không rỗng
+            if (!empty($data['classroom_code'])) {
                 $this->assignHomeroomTeacher($user, $data['classroom_code']);
 
                 // Tự động gán các môn mà giáo viên đăng ký vào bảng classroom_teacher

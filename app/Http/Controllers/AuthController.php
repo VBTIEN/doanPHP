@@ -32,7 +32,8 @@ class AuthController extends Controller
         if ($request->role_code === 'R1') {
             $rules['subject_codes'] = 'required|array|min:1';
             $rules['subject_codes.*'] = 'string|exists:subjects,subject_code';
-            $rules['classroom_code'] = 'nullable|string|exists:classrooms,classroom_code';
+            // Sửa rule cho classroom_code: không cho phép chuỗi rỗng
+            $rules['classroom_code'] = 'nullable|string|min:1|exists:classrooms,classroom_code';
         } elseif ($request->role_code === 'R2') {
             $rules['grade_code'] = 'required|string|exists:grades,grade_code';
         }
@@ -59,7 +60,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return ResponseFormatter::success(
-            ['token' => $token],
+            ['token' => $token, 'user' => $user],
             'Đăng ký thành công',
             201
         );

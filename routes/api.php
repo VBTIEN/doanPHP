@@ -15,6 +15,7 @@ use App\Http\Controllers\AcademicPerformanceController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\AIController;
+use App\Http\Controllers\Auth\GoogleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -46,6 +47,54 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/student/scores', [StudentController::class, 'getScores']);
     Route::put('/student/update', [StudentController::class, 'update']);
     Route::post('/export/student-scores', [ExportController::class, 'exportStudentScores']);
+
+    // CRUD routes for SchoolYear
+    Route::prefix('school-years')->middleware('teacher')->group(function () {
+        Route::post('/', [SchoolYearController::class, 'store']);
+        Route::get('/{school_year_code}', [SchoolYearController::class, 'show']);
+        Route::put('/{school_year_code}', [SchoolYearController::class, 'update']);
+        Route::delete('/{school_year_code}', [SchoolYearController::class, 'destroy']);
+    });
+
+    // CRUD routes for Grade
+    Route::prefix('grades')->middleware('teacher')->group(function () {
+        Route::post('/', [GradeController::class, 'store']);
+        Route::get('/{grade_code}', [GradeController::class, 'show']);
+        Route::put('/{grade_code}', [GradeController::class, 'update']);
+        Route::delete('/{grade_code}', [GradeController::class, 'destroy']);
+    });
+
+    // CRUD routes for Subject
+    Route::prefix('subjects')->middleware('teacher')->group(function () {
+        Route::post('/', [SubjectController::class, 'store']);
+        Route::get('/{subject_code}', [SubjectController::class, 'show']);
+        Route::put('/{subject_code}', [SubjectController::class, 'update']);
+        Route::delete('/{subject_code}', [SubjectController::class, 'destroy']);
+    });
+
+    // CRUD routes for Classroom
+    Route::prefix('classrooms')->middleware('teacher')->group(function () {
+        Route::post('/', [ClassroomController::class, 'store']);
+        Route::get('/{classroom_code}', [ClassroomController::class, 'show']);
+        Route::put('/{classroom_code}', [ClassroomController::class, 'update']);
+        Route::delete('/{classroom_code}', [ClassroomController::class, 'destroy']);
+    });
+
+    // CRUD routes for Term
+    Route::prefix('terms')->middleware('teacher')->group(function () {
+        Route::post('/', [TermController::class, 'store']);
+        Route::get('/{term_code}', [TermController::class, 'show']);
+        Route::put('/{term_code}', [TermController::class, 'update']);
+        Route::delete('/{term_code}', [TermController::class, 'destroy']);
+    });
+
+    // CRUD routes for Exam
+    Route::prefix('exams')->middleware('teacher')->group(function () {
+        Route::post('/', [ExamController::class, 'store']);
+        Route::get('/{exam_code}', [ExamController::class, 'show']);
+        Route::put('/{exam_code}', [ExamController::class, 'update']);
+        Route::delete('/{exam_code}', [ExamController::class, 'destroy']);
+    });
 });
 
 Route::middleware('cors')->group(function () {

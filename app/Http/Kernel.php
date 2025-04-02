@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'cors' => \App\Http\Middleware\Cors::class,
         'auth:sanctum' => \App\Http\Middleware\CustomSanctumAuth::class,
+        'teacher' => \App\Http\Middleware\RestrictToTeacher::class,
     ];
 }
