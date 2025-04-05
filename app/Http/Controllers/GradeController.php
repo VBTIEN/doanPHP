@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\ResponseFormatter;
 use App\Models\Grade;
+use App\Models\SchoolYear;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -37,13 +38,40 @@ class GradeController extends Controller
     {
         try {
             $validated = $request->validate([
-                'grade_name' => 'required|string|max:255|unique:grades,grade_name',
+                'grade_level' => 'required|in:10,11,12', // Chỉ chấp nhận 10, 11, 12
                 'school_year_code' => 'required|exists:school_years,school_year_code',
             ]);
 
+            // Lấy thông tin school year
+            $schoolYear = SchoolYear::where('school_year_code', $validated['school_year_code'])->first();
+
+            if (!$schoolYear) {
+                return ResponseFormatter::fail(
+                    'Năm học không tồn tại',
+                    null,
+                    404
+                );
+            }
+
+            // Tạo grade_code theo định dạng G{grade_level}_{school_year_code}
+            $grade_code = "G{$validated['grade_level']}_{$validated['school_year_code']}";
+            
+            // Tạo grade_name theo định dạng "Khối {grade_level} Năm {school_year_name}"
+            $grade_name = "Khối {$validated['grade_level']} Năm {$schoolYear->school_year_name}";
+
+            // Kiểm tra xem grade_code đã tồn tại chưa
+            $existingGrade = Grade::where('grade_code', $grade_code)->first();
+            if ($existingGrade) {
+                return ResponseFormatter::fail(
+                    "Khối với grade_code {$grade_code} đã tồn tại",
+                    null,
+                    400
+                );
+            }
+
             $grade = Grade::create([
-                'grade_code' => 'G' . (Grade::count() + 1),
-                'grade_name' => $validated['grade_name'],
+                'grade_code' => $grade_code,
+                'grade_name' => $grade_name,
                 'classroom_count' => 0,
                 'school_year_code' => $validated['school_year_code'],
             ]);
@@ -109,12 +137,43 @@ class GradeController extends Controller
             }
 
             $validated = $request->validate([
-                'grade_name' => 'required|string|max:255|unique:grades,grade_name,' . $grade->id,
+                'grade_level' => 'required|in:10,11,12', // Chỉ chấp nhận 10, 11, 12
                 'school_year_code' => 'required|exists:school_years,school_year_code',
             ]);
 
+            // Lấy thông tin school year
+            $schoolYear = SchoolYear::where('school_year_code', $validated['school_year_code'])->first();
+
+            if (!$schoolYear) {
+                return ResponseFormatter::fail(
+                    'Năm học không tồn tại',
+                    null,
+                    404
+                );
+            }
+
+            // Tạo grade_code mới theo định dạng G{grade_level}_{school_year_code}
+            $new_grade_code = "G{$validated['grade_level']}_{$validated['school_year_code']}";
+            
+            // Tạo grade_name mới theo định dạng "Khối {grade_level} Năm {school_year_name}"
+            $new_grade_name = "Khối {$validated['grade_level']} Năm {$schoolYear->school_year_name}";
+
+            // Nếu grade_code mới khác với hiện tại, kiểm tra xem nó đã tồn tại chưa
+            if ($new_grade_code !== $grade->grade_code) {
+                $existingGrade = Grade::where('grade_code', $new_grade_code)->first();
+                if ($existingGrade) {
+                    return ResponseFormatter::fail(
+                        "Khối với grade_code {$new_grade_code} đã tồn tại",
+                        null,
+                        400
+                    );
+                }
+            }
+
+            // Cập nhật thông tin
             $grade->update([
-                'grade_name' => $validated['grade_name'],
+                'grade_code' => $new_grade_code,
+                'grade_name' => $new_grade_name,
                 'school_year_code' => $validated['school_year_code'],
             ]);
 

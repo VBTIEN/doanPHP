@@ -55,8 +55,25 @@ class TermController extends Controller
                 'school_year_code' => 'required|exists:school_years,school_year_code',
             ]);
 
+            // Lấy thông tin school year để tạo term_code
+            $schoolYear = \App\Models\SchoolYear::where('school_year_code', $validated['school_year_code'])->first();
+            if (!$schoolYear) {
+                return ResponseFormatter::fail('Năm học không tồn tại', null, 400);
+            }
+
+            // Xác định term_code dựa trên logic của TermSeeder
+            [$startYear, $endYear] = explode('-', $schoolYear->school_year_name);
+            $termCount = Term::where('school_year_code', $validated['school_year_code'])->count() + 1;
+            $termCodePrefix = $termCount === 1 ? 'T1' : 'T2'; // T1 cho học kỳ 1, T2 cho học kỳ 2
+            $termCode = "{$termCodePrefix}_{$startYear}-{$endYear}";
+
+            // Kiểm tra term_code có bị trùng không
+            if (Term::where('term_code', $termCode)->exists()) {
+                return ResponseFormatter::fail('Mã học kỳ đã tồn tại', null, 400);
+            }
+
             $term = Term::create([
-                'term_code' => 'T' . (Term::count() + 1),
+                'term_code' => $termCode,
                 'term_name' => $validated['term_name'],
                 'start_date' => $validated['start_date'],
                 'end_date' => $validated['end_date'],
@@ -189,10 +206,9 @@ class TermController extends Controller
                 );
             }
 
-            // Kiểm tra xem học kỳ có điểm số liên quan không
-            if ($term->scores()->exists()) {
+            if ($term->exams()->exists()) {
                 return ResponseFormatter::fail(
-                    'Không thể xóa học kỳ vì đã có điểm số liên quan',
+                    'Không thể xóa học kỳ vì đã có kỳ thi liên quan',
                     null,
                     400
                 );

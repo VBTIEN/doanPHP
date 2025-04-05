@@ -32,12 +32,41 @@ class SchoolYearController extends Controller
     {
         try {
             $validated = $request->validate([
-                'school_year_name' => 'required|string|max:255|unique:school_years,school_year_name',
+                'start_year' => 'required|integer|min:2000|max:9999', // Năm bắt đầu
             ]);
 
+            $startYear = $validated['start_year'];
+            $nextYear = $startYear + 1;
+
+            // Tạo school_year_code theo định dạng SY_{start_year}-{next_year}
+            $school_year_code = "SY_{$startYear}-{$nextYear}";
+
+            // Tạo school_year_name theo định dạng {start_year}-{next_year}
+            $school_year_name = "{$startYear}-{$nextYear}";
+
+            // Kiểm tra xem school_year_code đã tồn tại chưa
+            $existingSchoolYear = SchoolYear::where('school_year_code', $school_year_code)->first();
+            if ($existingSchoolYear) {
+                return ResponseFormatter::fail(
+                    "Năm học với school_year_code {$school_year_code} đã tồn tại",
+                    null,
+                    400
+                );
+            }
+
+            // Kiểm tra uniqueness của school_year_name
+            $nameExists = SchoolYear::where('school_year_name', $school_year_name)->first();
+            if ($nameExists) {
+                return ResponseFormatter::fail(
+                    "Năm học với school_year_name {$school_year_name} đã tồn tại",
+                    null,
+                    400
+                );
+            }
+
             $schoolYear = SchoolYear::create([
-                'school_year_code' => 'SY' . (SchoolYear::count() + 1),
-                'school_year_name' => $validated['school_year_name'],
+                'school_year_code' => $school_year_code,
+                'school_year_name' => $school_year_name,
             ]);
 
             return ResponseFormatter::success(
@@ -96,11 +125,45 @@ class SchoolYearController extends Controller
             }
 
             $validated = $request->validate([
-                'school_year_name' => 'required|string|max:255|unique:school_years,school_year_name,' . $schoolYear->id,
+                'start_year' => 'required|integer|min:2000|max:9999', // Năm bắt đầu
             ]);
 
+            $startYear = $validated['start_year'];
+            $nextYear = $startYear + 1;
+
+            // Tạo school_year_code mới
+            $new_school_year_code = "SY_{$startYear}-{$nextYear}";
+
+            // Tạo school_year_name mới
+            $new_school_year_name = "{$startYear}-{$nextYear}";
+
+            // Kiểm tra uniqueness của school_year_code mới (nếu thay đổi)
+            if ($new_school_year_code !== $schoolYear->school_year_code) {
+                $codeExists = SchoolYear::where('school_year_code', $new_school_year_code)->first();
+                if ($codeExists) {
+                    return ResponseFormatter::fail(
+                        "Năm học với school_year_code {$new_school_year_code} đã tồn tại",
+                        null,
+                        400
+                    );
+                }
+            }
+
+            // Kiểm tra uniqueness của school_year_name mới (nếu thay đổi)
+            if ($new_school_year_name !== $schoolYear->school_year_name) {
+                $nameExists = SchoolYear::where('school_year_name', $new_school_year_name)->first();
+                if ($nameExists) {
+                    return ResponseFormatter::fail(
+                        "Năm học với school_year_name {$new_school_year_name} đã tồn tại",
+                        null,
+                        400
+                    );
+                }
+            }
+
             $schoolYear->update([
-                'school_year_name' => $validated['school_year_name'],
+                'school_year_code' => $new_school_year_code,
+                'school_year_name' => $new_school_year_name,
             ]);
 
             return ResponseFormatter::success(

@@ -32,11 +32,12 @@ class SubjectController extends Controller
     {
         try {
             $validated = $request->validate([
+                'subject_code' => 'required|string|max:10|unique:subjects,subject_code',
                 'subject_name' => 'required|string|max:255|unique:subjects,subject_name',
             ]);
 
             $subject = Subject::create([
-                'subject_code' => 'SUB' . (Subject::count() + 1),
+                'subject_code' => $validated['subject_code'],
                 'subject_name' => $validated['subject_name'],
             ]);
 
@@ -96,10 +97,12 @@ class SubjectController extends Controller
             }
 
             $validated = $request->validate([
+                'new_subject_code' => 'required|string|max:10|unique:subjects,subject_code,' . $subject->id,
                 'subject_name' => 'required|string|max:255|unique:subjects,subject_name,' . $subject->id,
             ]);
 
             $subject->update([
+                'subject_code' => $validated['new_subject_code'],
                 'subject_name' => $validated['subject_name'],
             ]);
 
@@ -131,7 +134,7 @@ class SubjectController extends Controller
             }
 
             // Kiểm tra nếu môn học có Teacher hoặc Score liên quan
-            if ($subject->teachers()->exists() || $subject->scores()->exists()) {
+            if ($subject->teachers()->exists()) {
                 return ResponseFormatter::fail(
                     'Không thể xóa môn học vì có giáo viên hoặc điểm số liên quan',
                     null,

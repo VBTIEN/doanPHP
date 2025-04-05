@@ -16,8 +16,8 @@ class Term extends Model////////////////////////////////seeders/////////////////
         return $this->belongsTo(SchoolYear::class, 'school_year_code', 'school_year_code');
     }
 
-    public function scores()
+    public function exams()
     {
-        return $this->hasMany(Score::class, 'term_code', 'term_code');
+        return $this->hasMany(Exam::class, 'term_code', 'term_code');
     }
 }

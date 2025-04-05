@@ -11,10 +11,47 @@ use Illuminate\Support\Facades\Log;
 class ExamController extends Controller
 {
     /**
-     * Lấy danh sách tất cả các kỳ thi.
+     * Tạo một kỳ thi mới.
      *
+     * @param Request $request
      * @return JsonResponse
      */
+    public function store(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'exam_name' => 'required|string|max:255|unique:exams,exam_name',
+                'subject_code' => 'required|exists:subjects,subject_code',
+                'term_code' => 'required|exists:terms,term_code',
+                'date' => 'required|date',
+            ]);
+
+            $examCount = Exam::count();
+            $exam = Exam::create([
+                'exam_code' => 'E' . ($examCount + 1), // Tạo exam_code theo thứ tự
+                'exam_name' => $validated['exam_name'],
+                'subject_code' => $validated['subject_code'],
+                'term_code' => $validated['term_code'],
+                'date' => $validated['date'],
+            ]);
+
+            $exam->load(['subject', 'term']); // Load thông tin subject và term sau khi tạo
+
+            return ResponseFormatter::success(
+                $exam,
+                'Tạo kỳ thi thành công'
+            );
+        } catch (\Exception $e) {
+            Log::error('Error in ExamController@store: ' . $e->getMessage());
+            return ResponseFormatter::fail(
+                'Không thể tạo kỳ thi: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    // Các hàm khác (index, show, update, destroy) giữ nguyên như trước
     public function index(): JsonResponse
     {
         try {
@@ -39,52 +76,6 @@ class ExamController extends Controller
         }
     }
 
-    /**
-     * Tạo một kỳ thi mới.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function store(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'exam_name' => 'required|string|max:255|unique:exams,exam_name',
-                'subject_code' => 'required|exists:subjects,subject_code',
-                'term_code' => 'required|exists:terms,term_code',
-                'date' => 'required|date',
-            ]);
-
-            $exam = Exam::create([
-                'exam_code' => 'E' . (Exam::count() + 1),
-                'exam_name' => $validated['exam_name'],
-                'subject_code' => $validated['subject_code'],
-                'term_code' => $validated['term_code'],
-                'date' => $validated['date'],
-            ]);
-
-            $exam->load(['subject', 'term']); // Load thông tin subject và term sau khi tạo
-
-            return ResponseFormatter::success(
-                $exam,
-                'Tạo kỳ thi thành công'
-            );
-        } catch (\Exception $e) {
-            Log::error('Error in ExamController@store: ' . $e->getMessage());
-            return ResponseFormatter::fail(
-                'Không thể tạo kỳ thi: ' . $e->getMessage(),
-                null,
-                500
-            );
-        }
-    }
-
-    /**
-     * Lấy thông tin chi tiết của một kỳ thi.
-     *
-     * @param string $exam_code
-     * @return JsonResponse
-     */
     public function show(string $exam_code): JsonResponse
     {
         try {
@@ -120,13 +111,6 @@ class ExamController extends Controller
         }
     }
 
-    /**
-     * Cập nhật thông tin một kỳ thi.
-     *
-     * @param Request $request
-     * @param string $exam_code
-     * @return JsonResponse
-     */
     public function update(Request $request, string $exam_code): JsonResponse
     {
         try {
@@ -154,7 +138,7 @@ class ExamController extends Controller
                 'date' => $validated['date'],
             ]);
 
-            $exam->load(['subject', 'term']); // Load thông tin subject và term sau khi cập nhật
+            $exam->load(['subject', 'term']);
 
             return ResponseFormatter::success(
                 $exam,
@@ -170,12 +154,6 @@ class ExamController extends Controller
         }
     }
 
-    /**
-     * Xóa một kỳ thi.
-     *
-     * @param string $exam_code
-     * @return JsonResponse
-     */
     public function destroy(string $exam_code): JsonResponse
     {
         try {
@@ -189,7 +167,6 @@ class ExamController extends Controller
                 );
             }
 
-            // Kiểm tra xem kỳ thi có điểm số liên quan không
             if ($exam->scores()->exists()) {
                 return ResponseFormatter::fail(
                     'Không thể xóa kỳ thi vì đã có điểm số liên quan',
